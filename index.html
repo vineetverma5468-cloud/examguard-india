@@ -6,7 +6,7 @@
 <title>ExamGuard India | National Examination Integrity Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230B2340'/%3E%3Ctext x='50' y='68' font-size='54' font-family='Georgia,serif' font-weight='700' fill='%23D9B65C' text-anchor='middle'%3EEG%3C/text%3E%3C/svg%3E">
 <style>
   :root{
     --navy:#0B2340;
@@ -92,18 +92,20 @@
     background:var(--line);border:1px solid var(--line);
   }
   .kpi{
-    background:var(--card);padding:20px 18px;position:relative;
+    background:var(--card);padding:20px 18px;position:relative;transition:box-shadow .15s ease, transform .15s ease;
   }
+  .kpi:hover{box-shadow:0 6px 18px rgba(11,35,64,.08);transform:translateY(-1px);z-index:1;}
   .kpi .label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:600;}
-  .kpi .value{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;color:var(--navy);margin-top:8px;}
+  .kpi .value{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;color:var(--navy);margin-top:8px;font-feature-settings:"tnum";font-variant-numeric:tabular-nums;}
   .kpi .foot{font-size:11.5px;color:var(--ink-soft);margin-top:6px;line-height:1.4;}
   .kpi .foot.alert{color:var(--brick);font-weight:600;}
   .kpi .foot.up{color:var(--brick);font-weight:600;}
 
   /* ---------- Cards / panels ---------- */
   .panel{
-    background:var(--card);border:1px solid var(--line);padding:22px;
+    background:var(--card);border:1px solid var(--line);padding:22px;transition:box-shadow .15s ease;
   }
+  .panel:hover{box-shadow:0 6px 20px rgba(11,35,64,.06);}
   .panel h3{
     font-family:'Source Serif 4',serif;font-size:16px;margin:0 0 4px;color:var(--navy);font-weight:600;
   }
@@ -183,8 +185,13 @@
     padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;
   }
   .leaderboard li:last-child{border-bottom:none;}
-  .lb-name{color:var(--ink);font-weight:500;}
-  .lb-count{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--brick);background:var(--brick-soft);padding:2px 9px;font-size:12px;}
+  .lb-name{color:var(--ink);font-weight:500;display:flex;align-items:center;gap:10px;}
+  .lb-rank{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;color:var(--ink-soft);
+    width:20px;height:20px;border:1px solid var(--line);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .lb-count{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--brick);background:var(--brick-soft);padding:2px 9px;font-size:12px;font-variant-numeric:tabular-nums;}
 
   /* ---------- footer ---------- */
   footer{
@@ -193,6 +200,21 @@
   footer .wrap{padding:0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:20px;}
   footer a{color:var(--amber-2);text-decoration:none;}
   footer b{color:#EDEFF3;}
+
+  a:focus-visible, button:focus-visible, select:focus-visible{
+    outline:2px solid var(--amber);outline-offset:2px;
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    section{opacity:0;transform:translateY(10px);animation:rise .5s ease forwards;}
+    section:nth-of-type(1){animation-delay:.02s;}
+    section:nth-of-type(2){animation-delay:.06s;}
+    section:nth-of-type(3){animation-delay:.1s;}
+    section:nth-of-type(4){animation-delay:.14s;}
+    section:nth-of-type(5){animation-delay:.18s;}
+    section:nth-of-type(6){animation-delay:.22s;}
+  }
+  @keyframes rise{ to{ opacity:1; transform:translateY(0); } }
 
   @media (max-width:920px){
     .kpi-grid{grid-template-columns:repeat(2,1fr);}
@@ -400,11 +422,11 @@ document.getElementById('gen-date').textContent = new Date().toISOString().slice
 const NAVY = '#0B2340', AMBER = '#B5872A', BRICK = '#8C3327', GREEN='#3E6650',
       SLATE = '#8891A0', PAPER2 = '#EFEBE1', AMBER2='#D9B65C';
 
-Chart.defaults.font.family = "'Inter', sans-serif";
-Chart.defaults.color = '#5B6373';
-Chart.defaults.font.size = 12;
-
-/* ---------------- KPIs ---------------- */
+/* =========================================================================
+   PART 1 — Text content: KPIs, leaderboard, filters, case log table.
+   Deliberately has ZERO dependency on Chart.js so the dashboard's data
+   is always visible even if the charting library fails to load.
+   ========================================================================= */
 const s = DATA.summary;
 document.getElementById('ref-years').textContent = `${s.yearMin}\u2013${s.yearMax}`;
 document.getElementById('kpi-total').textContent = s.totalIncidents;
@@ -412,124 +434,17 @@ document.getElementById('kpi-total-foot').textContent = `spanning ${s.yearMin}\u
 document.getElementById('kpi-confirmed').textContent = Math.round(s.confirmedCount / s.totalIncidents * 100) + '%';
 document.getElementById('kpi-states').textContent = s.statesAffected;
 document.getElementById('kpi-recent').textContent = s.last3YearsCount;
-const priorShare = s.totalIncidents - s.last3YearsCount;
 const pct3yr = Math.round(s.last3YearsCount / s.totalIncidents * 100);
 document.getElementById('kpi-recent-foot').textContent = `${pct3yr}% of all incidents occurred in 2022\u201324 alone`;
 document.getElementById('kpi-strong').textContent = s.strongResponseRate + '%';
 
-/* ---------------- Trend chart ---------------- */
-const years = Object.keys(s.byYear);
-new Chart(document.getElementById('trendChart'), {
-  type: 'line',
-  data: {
-    labels: years,
-    datasets: [{
-      data: years.map(y => s.byYear[y]),
-      borderColor: NAVY,
-      backgroundColor: 'rgba(11,35,64,0.08)',
-      fill: true,
-      tension: 0.3,
-      pointRadius: 4,
-      pointBackgroundColor: AMBER,
-      pointBorderColor: NAVY,
-      borderWidth: 2.5,
-    }]
-  },
-  options: {
-    plugins: { legend: { display: false },
-      tooltip: { callbacks: { label: c => `${c.parsed.y} incidents` } } },
-    scales: {
-      y: { beginAtZero: true, grid: { color: '#E3DFD3' }, ticks: { stepSize: 3 } },
-      x: { grid: { display: false } }
-    }
-  }
-});
-
-/* ---------------- State hotspot chart ---------------- */
-const stateEntries = Object.entries(s.byState).sort((a,b)=>b[1]-a[1]).slice(0,10);
-new Chart(document.getElementById('stateChart'), {
-  type: 'bar',
-  data: {
-    labels: stateEntries.map(e=>e[0]),
-    datasets: [{
-      data: stateEntries.map(e=>e[1]),
-      backgroundColor: stateEntries.map((e,i)=> i===0 ? BRICK : NAVY),
-      borderRadius: 1,
-      maxBarThickness: 22,
-    }]
-  },
-  options: {
-    indexAxis: 'y',
-    plugins: { legend: { display:false } },
-    scales: {
-      x: { beginAtZero:true, grid:{ color:'#E3DFD3' } },
-      y: { grid:{ display:false } }
-    }
-  }
-});
-
-/* ---------------- Status donut ---------------- */
-new Chart(document.getElementById('statusChart'), {
-  type: 'doughnut',
-  data: {
-    labels: ['Confirmed','Alleged'],
-    datasets:[{ data:[s.confirmedCount, s.allegedCount], backgroundColor:[BRICK, SLATE], borderWidth:2, borderColor:'#fff' }]
-  },
-  options: {
-    cutout:'62%',
-    plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, padding:16 } } }
-  }
-});
-
-/* ---------------- Severity chart (confirmed only) ---------------- */
-const sevOrder = ['Strong Response','Moderate Response','No Consequence'];
-const sevColors = { 'Strong Response': GREEN, 'Moderate Response': AMBER, 'No Consequence': BRICK };
-const sevData = sevOrder.map(k => s.confirmedSeverity[k] || 0);
-new Chart(document.getElementById('severityChart'), {
-  type: 'bar',
-  data: {
-    labels: sevOrder,
-    datasets: [{ data: sevData, backgroundColor: sevOrder.map(k=>sevColors[k]), borderRadius: 2, maxBarThickness: 46 }]
-  },
-  options: {
-    plugins: { legend:{ display:false } },
-    scales: { y:{ beginAtZero:true, grid:{ color:'#E3DFD3' } }, x:{ grid:{ display:false } } }
-  }
-});
-
-/* ---------------- Repeat offender leaderboard ---------------- */
 const lb = document.getElementById('leaderboard');
-Object.entries(s.repeatOffenders).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([name,count])=>{
+Object.entries(s.repeatOffenders).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([name,count],i)=>{
   const li = document.createElement('li');
-  li.innerHTML = `<span class="lb-name">${name}</span><span class="lb-count">\u00d7${count}</span>`;
+  li.innerHTML = `<span class="lb-name"><span class="lb-rank">${i+1}</span>${name}</span><span class="lb-count">\u00d7${count}</span>`;
   lb.appendChild(li);
 });
 
-/* ---------------- Body type + action charts ---------------- */
-new Chart(document.getElementById('bodyTypeChart'), {
-  type: 'doughnut',
-  data: {
-    labels: Object.keys(s.byBodyType),
-    datasets: [{ data: Object.values(s.byBodyType), backgroundColor:[NAVY, AMBER, SLATE], borderWidth:2, borderColor:'#fff' }]
-  },
-  options: { cutout:'58%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:12, font:{size:11} } } } }
-});
-
-const actionSorted = Object.entries(s.byAction).sort((a,b)=>b[1]-a[1]).slice(0,6);
-new Chart(document.getElementById('actionChart'), {
-  type: 'bar',
-  data: {
-    labels: actionSorted.map(e=>e[0]),
-    datasets: [{ data: actionSorted.map(e=>e[1]), backgroundColor: NAVY, borderRadius:1, maxBarThickness:18 }]
-  },
-  options: {
-    indexAxis:'y',
-    plugins:{ legend:{ display:false } },
-    scales: { x:{ beginAtZero:true, grid:{ color:'#E3DFD3' } }, y:{ grid:{ display:false }, ticks:{ font:{ size:10.5 } } } }
-  }
-});
-
-/* ---------------- Filters + case log table ---------------- */
 const yearSel = document.getElementById('f-year');
 const stateSel = document.getElementById('f-state');
 const bodyTypeSel = document.getElementById('f-bodytype');
@@ -562,6 +477,10 @@ function renderTable(){
   );
   document.getElementById('f-count').textContent = rows.length;
   const tbody = document.getElementById('case-log-body');
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--ink-soft);">No incidents match these filters.</td></tr>`;
+    return;
+  }
   tbody.innerHTML = rows.map(r => `
     <tr>
       <td class="mono" style="white-space:nowrap;">${r.date || '\u2014'}</td>
@@ -583,6 +502,128 @@ document.getElementById('f-reset').addEventListener('click', () => {
 });
 
 renderTable();
+
+/* =========================================================================
+   PART 2 — Charts. Chart.js is loaded dynamically with a multi-CDN fallback
+   chain (cdnjs -> jsDelivr -> unpkg). If every source fails (offline,
+   firewall, ad-blocker), each chart panel shows a plain-text fallback
+   instead of a blank canvas or a page-breaking error.
+   ========================================================================= */
+function loadScript(src){
+  return new Promise((resolve, reject) => {
+    const el = document.createElement('script');
+    el.src = src;
+    el.onload = () => resolve(true);
+    el.onerror = () => reject(new Error('failed: ' + src));
+    document.head.appendChild(el);
+  });
+}
+
+const CHART_CDNS = [
+  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js',
+  'https://unpkg.com/chart.js@4.4.4/dist/chart.umd.min.js'
+];
+
+async function loadChartJs(){
+  for (const url of CHART_CDNS){
+    try { await loadScript(url); if (typeof Chart !== 'undefined') return true; }
+    catch(e) { /* try next CDN */ }
+  }
+  return false;
+}
+
+function chartFallback(canvasId, message){
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const div = document.createElement('div');
+  div.style.cssText = 'padding:30px 10px;text-align:center;color:var(--ink-soft);font-size:12.5px;border:1px dashed var(--line);';
+  div.textContent = message;
+  canvas.replaceWith(div);
+}
+
+function renderCharts(){
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.color = '#5B6373';
+  Chart.defaults.font.size = 12;
+
+  const attempts = [
+    () => {
+      const years = Object.keys(s.byYear);
+      new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: { labels: years, datasets: [{
+          data: years.map(y => s.byYear[y]),
+          borderColor: NAVY, backgroundColor: 'rgba(11,35,64,0.08)',
+          fill: true, tension: 0.3, pointRadius: 4,
+          pointBackgroundColor: AMBER, pointBorderColor: NAVY, borderWidth: 2.5,
+        }] },
+        options: {
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.parsed.y} incidents` } } },
+          scales: { y: { beginAtZero: true, grid: { color: '#E3DFD3' }, ticks: { stepSize: 3 } }, x: { grid: { display: false } } }
+        }
+      });
+    },
+    () => {
+      const stateEntries = Object.entries(s.byState).sort((a,b)=>b[1]-a[1]).slice(0,10);
+      new Chart(document.getElementById('stateChart'), {
+        type: 'bar',
+        data: { labels: stateEntries.map(e=>e[0]), datasets: [{
+          data: stateEntries.map(e=>e[1]),
+          backgroundColor: stateEntries.map((e,i)=> i===0 ? BRICK : NAVY),
+          borderRadius: 1, maxBarThickness: 22,
+        }] },
+        options: { indexAxis: 'y', plugins: { legend: { display:false } },
+          scales: { x: { beginAtZero:true, grid:{ color:'#E3DFD3' } }, y: { grid:{ display:false } } } }
+      });
+    },
+    () => {
+      new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: { labels: ['Confirmed','Alleged'], datasets:[{ data:[s.confirmedCount, s.allegedCount], backgroundColor:[BRICK, SLATE], borderWidth:2, borderColor:'#fff' }] },
+        options: { cutout:'62%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, padding:16 } } } }
+      });
+    },
+    () => {
+      const sevOrder = ['Strong Response','Moderate Response','No Consequence'];
+      const sevColors = { 'Strong Response': GREEN, 'Moderate Response': AMBER, 'No Consequence': BRICK };
+      const sevData = sevOrder.map(k => s.confirmedSeverity[k] || 0);
+      new Chart(document.getElementById('severityChart'), {
+        type: 'bar',
+        data: { labels: sevOrder, datasets: [{ data: sevData, backgroundColor: sevOrder.map(k=>sevColors[k]), borderRadius: 2, maxBarThickness: 46 }] },
+        options: { plugins: { legend:{ display:false } }, scales: { y:{ beginAtZero:true, grid:{ color:'#E3DFD3' } }, x:{ grid:{ display:false } } } }
+      });
+    },
+    () => {
+      new Chart(document.getElementById('bodyTypeChart'), {
+        type: 'doughnut',
+        data: { labels: Object.keys(s.byBodyType), datasets: [{ data: Object.values(s.byBodyType), backgroundColor:[NAVY, AMBER, SLATE], borderWidth:2, borderColor:'#fff' }] },
+        options: { cutout:'58%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:12, font:{size:11} } } } }
+      });
+    },
+    () => {
+      const actionSorted = Object.entries(s.byAction).sort((a,b)=>b[1]-a[1]).slice(0,6);
+      new Chart(document.getElementById('actionChart'), {
+        type: 'bar',
+        data: { labels: actionSorted.map(e=>e[0]), datasets: [{ data: actionSorted.map(e=>e[1]), backgroundColor: NAVY, borderRadius:1, maxBarThickness:18 }] },
+        options: { indexAxis:'y', plugins:{ legend:{ display:false } },
+          scales: { x:{ beginAtZero:true, grid:{ color:'#E3DFD3' } }, y:{ grid:{ display:false }, ticks:{ font:{ size:10.5 } } } } }
+      });
+    }
+  ];
+  const ids = ['trendChart','stateChart','statusChart','severityChart','bodyTypeChart','actionChart'];
+  attempts.forEach((fn, i) => {
+    try { fn(); } catch(e) { chartFallback(ids[i], 'Chart could not render \u2014 see the data table below for the same figures.'); }
+  });
+}
+
+loadChartJs().then(ok => {
+  if (ok) { renderCharts(); }
+  else {
+    ['trendChart','stateChart','statusChart','severityChart','bodyTypeChart','actionChart']
+      .forEach(id => chartFallback(id, 'Chart library unavailable offline \u2014 see the KPI cards and case log table for the same figures.'));
+  }
+});
 </script>
 
 </body>
