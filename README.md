@@ -2,7 +2,7 @@
 
 **An end-to-end data analytics project examining exam paper leak incidents in India (2014–2024), built to surface where leaks recur and whether institutional responses actually escalate with severity.**
 
-[View the live dashboard]([./dashboard/index.html](https://vineetverma5468-cloud.github.io/Credit-Card-Customer-Risk-Value-Segmentation/)) · Dataset: [India – Exam Paper Leak Cases and Incidents (Kaggle)](https://www.kaggle.com/)
+[View the live dashboard](https://vineetverma5468-cloud.github.io/Credit-Card-Customer-Risk-Value-Segmentation/) · Dataset: [India – Exam Paper Leak Cases and Incidents (Kaggle)](https://www.kaggle.com/)
 
 ---
 
