@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExamGuard India | National Examination Integrity Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#0B2340;
+    --navy-2:#12335C;
+    --paper:#F6F4EE;
+    --paper-2:#EFEBE1;
+    --ink:#1B2027;
+    --ink-soft:#5B6373;
+    --line:#D9D3C4;
+    --amber:#B5872A;
+    --amber-2:#E4C777;
+    --brick:#8C3327;
+    --brick-soft:#F1DAD5;
+    --green:#3E6650;
+    --green-soft:#DCE7DD;
+    --card:#FFFFFF;
+    --radius:2px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .display{font-family:'Source Serif 4',serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- Masthead ---------- */
+  .masthead{
+    background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);
+    color:#EDEFF3;
+    padding:28px 40px 26px;
+    border-bottom:6px solid var(--amber);
+  }
+  .masthead-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:24px;
+    max-width:1280px;
+    margin:0 auto;
+  }
+  .brand-block{display:flex;align-items:center;gap:16px;}
+  .brand-mark{
+    width:52px;height:52px;border:2px solid var(--amber-2);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Source Serif 4',serif;font-weight:700;font-size:22px;color:var(--amber-2);
+    flex-shrink:0;
+  }
+  .brand-name{font-family:'Source Serif 4',serif;font-size:26px;font-weight:700;letter-spacing:.3px;margin:0;}
+  .brand-sub{font-size:12.5px;color:#B9C2D4;letter-spacing:.06em;text-transform:uppercase;margin-top:3px;}
+  .case-ref{
+    text-align:right;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#B9C2D4;line-height:1.7;
+  }
+  .case-ref b{color:#EDEFF3;letter-spacing:.04em;}
+  .masthead-title{
+    max-width:1280px;margin:22px auto 0;
+    font-family:'Source Serif 4',serif;font-weight:600;font-size:34px;line-height:1.25;
+    border-top:1px solid rgba(255,255,255,.15);padding-top:20px;
+  }
+  .masthead-desc{
+    max-width:780px;color:#C7CEDC;font-size:14.5px;line-height:1.6;margin-top:10px;
+  }
+
+  /* ---------- Layout ---------- */
+  .wrap{max-width:1280px;margin:0 auto;padding:34px 40px 60px;}
+  section{margin-bottom:44px;}
+  .section-label{
+    display:flex;align-items:baseline;gap:12px;margin-bottom:16px;
+  }
+  .section-label .num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--amber);font-weight:700;}
+  .section-label h2{
+    font-family:'Source Serif 4',serif;font-size:20px;font-weight:600;margin:0;color:var(--navy);
+  }
+  .section-label .rule{flex:1;height:1px;background:var(--line);}
+
+  /* ---------- KPI strip ---------- */
+  .kpi-grid{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:1px;
+    background:var(--line);border:1px solid var(--line);
+  }
+  .kpi{
+    background:var(--card);padding:20px 18px;position:relative;
+  }
+  .kpi .label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:600;}
+  .kpi .value{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;color:var(--navy);margin-top:8px;}
+  .kpi .foot{font-size:11.5px;color:var(--ink-soft);margin-top:6px;line-height:1.4;}
+  .kpi .foot.alert{color:var(--brick);font-weight:600;}
+  .kpi .foot.up{color:var(--brick);font-weight:600;}
+
+  /* ---------- Cards / panels ---------- */
+  .panel{
+    background:var(--card);border:1px solid var(--line);padding:22px;
+  }
+  .panel h3{
+    font-family:'Source Serif 4',serif;font-size:16px;margin:0 0 4px;color:var(--navy);font-weight:600;
+  }
+  .panel .sub{font-size:12.5px;color:var(--ink-soft);margin-bottom:16px;}
+  .grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);}
+  .grid-2 .panel{border:none;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+  .grid-3 .panel{border:none;}
+
+  canvas{max-width:100%;}
+
+  /* ---------- callout ---------- */
+  .callout{
+    border:1px solid var(--amber);background:#FBF3E1;padding:16px 18px;
+    display:flex;gap:14px;align-items:flex-start;
+  }
+  .callout .stamp{
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;letter-spacing:.06em;
+    border:1.5px solid var(--amber);color:var(--amber);padding:4px 8px;transform:rotate(-3deg);white-space:nowrap;
+  }
+  .callout p{margin:0;font-size:13px;line-height:1.6;color:#4A3B18;}
+  .callout b{color:var(--navy);}
+
+  /* ---------- stamps (status badges) ---------- */
+  .stamp-badge{
+    display:inline-block;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;
+    letter-spacing:.05em;padding:3px 7px;border:1.5px solid currentColor;text-transform:uppercase;
+    border-radius:1px;
+  }
+  .stamp-confirmed{color:var(--brick);}
+  .stamp-alleged{color:var(--ink-soft);border-style:dashed;}
+
+  .sev-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px;}
+  .sev-strong{background:var(--green-soft);color:var(--green);}
+  .sev-moderate{background:#FBF3E1;color:var(--amber);}
+  .sev-none{background:var(--brick-soft);color:var(--brick);}
+  .sev-unknown{background:#EAEAEA;color:#666;}
+
+  /* ---------- filters ---------- */
+  .filters{
+    display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;
+    background:var(--card);border:1px solid var(--line);padding:18px 22px;margin-bottom:1px;
+  }
+  .filter-group{display:flex;flex-direction:column;gap:6px;}
+  .filter-group label{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:700;}
+  .filter-group select{
+    font-family:'Inter',sans-serif;font-size:13px;padding:8px 10px;border:1px solid var(--line);
+    background:var(--paper);color:var(--ink);min-width:170px;
+  }
+  .filter-reset{
+    font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;color:var(--navy);
+    background:none;border:1px solid var(--navy);padding:8px 14px;cursor:pointer;height:37px;
+  }
+  .filter-reset:hover{background:var(--navy);color:#fff;}
+  .filter-count{font-size:12px;color:var(--ink-soft);margin-left:auto;align-self:center;}
+  .filter-count b{color:var(--navy);}
+
+  /* ---------- table ---------- */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);
+    padding:10px 14px;border-bottom:2px solid var(--navy);background:var(--paper-2);font-weight:700;
+  }
+  tbody td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tbody tr:hover{background:#FAF8F2;}
+  .exam-name{font-weight:600;color:var(--navy);}
+  .note-text{color:var(--ink-soft);font-size:12px;}
+  .repeat-flag{color:var(--brick);font-weight:700;font-size:11px;font-family:'JetBrains Mono',monospace;}
+
+  .table-panel{background:var(--card);border:1px solid var(--line);border-top:none;padding:0;overflow-x:auto;}
+  .table-scroll{max-height:560px;overflow-y:auto;}
+
+  /* ---------- leaderboard ---------- */
+  .leaderboard{list-style:none;margin:0;padding:0;}
+  .leaderboard li{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;
+  }
+  .leaderboard li:last-child{border-bottom:none;}
+  .lb-name{color:var(--ink);font-weight:500;}
+  .lb-count{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--brick);background:var(--brick-soft);padding:2px 9px;font-size:12px;}
+
+  /* ---------- footer ---------- */
+  footer{
+    background:var(--navy);color:#B9C2D4;padding:28px 40px;font-size:12px;line-height:1.8;
+  }
+  footer .wrap{padding:0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:20px;}
+  footer a{color:var(--amber-2);text-decoration:none;}
+  footer b{color:#EDEFF3;}
+
+  @media (max-width:920px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .grid-2,.grid-3{grid-template-columns:1fr;}
+    .masthead{padding:22px 20px;}
+    .wrap{padding:24px 20px 40px;}
+    .masthead-title{font-size:24px;}
+    .case-ref{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-top">
+    <div class="brand-block">
+      <div class="brand-mark">EG</div>
+      <div>
+        <p class="brand-name">ExamGuard India</p>
+        <div class="brand-sub">National Examination Integrity Dashboard</div>
+      </div>
+    </div>
+    <div class="case-ref">
+      REF: <b>MOE/EI-DASH/2026</b><br>
+      COVERAGE: <b id="ref-years">2014&ndash;2024</b><br>
+      STATUS: <b style="color:#8FBF9F;">ACTIVE MONITORING</b>
+    </div>
+  </div>
+  <h1 class="masthead-title">Are examination paper leaks being deterred &mdash; or just cancelled and repeated?</h1>
+  <p class="masthead-desc">A briefing-style dashboard built to help policy teams identify recurring leak hotspots, track how enforcement severity compares to confirmed incidents, and flag conducting bodies with repeat exposure. Prepared as an independent portfolio analysis, not an official government publication.</p>
+</header>
+
+<div class="wrap">
+
+  <!-- KPI STRIP -->
+  <section>
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi">
+        <div class="label">Total Incidents Logged</div>
+        <div class="value" id="kpi-total">&mdash;</div>
+        <div class="foot" id="kpi-total-foot">&mdash;</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Confirmed Leak Rate</div>
+        <div class="value" id="kpi-confirmed">&mdash;</div>
+        <div class="foot">of all logged incidents, remainder alleged / unproven</div>
+      </div>
+      <div class="kpi">
+        <div class="label">States &amp; UTs Affected</div>
+        <div class="value" id="kpi-states">&mdash;</div>
+        <div class="foot">Uttar Pradesh is the single largest hotspot</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Incidents, Last 3 Years</div>
+        <div class="value" id="kpi-recent">&mdash;</div>
+        <div class="foot up" id="kpi-recent-foot">&mdash;</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Strong Response Rate</div>
+        <div class="value" id="kpi-strong">&mdash;</div>
+        <div class="foot alert">of confirmed leaks resulted in chargesheet / suspension</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA QUALITY CALLOUT -->
+  <section style="margin-bottom:36px;">
+    <div class="callout">
+      <div class="stamp">DATA&nbsp;NOTE</div>
+      <p><b>"Appeared Students" is reported for only 1 of 66 incidents (1.5%) in the source dataset</b> &mdash; so "students affected" is intentionally excluded as a headline metric here. Treating it as reliable without enrichment from official exam-body records would materially overstate confidence. State names, conducting-body names, and action-taken text were also standardized during cleaning (see <span class="mono">scripts/clean_data.py</span>) to correct spelling inconsistencies in the raw source.</p>
+    </div>
+  </section>
+
+  <!-- TREND -->
+  <section>
+    <div class="section-label"><span class="num">01</span><h2>Incident Trend, 2014&ndash;2024</h2><div class="rule"></div></div>
+    <div class="panel">
+      <h3>Reported incidents by year</h3>
+      <p class="sub">Incidents recorded per calendar year across all conducting bodies and exam types.</p>
+      <canvas id="trendChart" height="90"></canvas>
+    </div>
+  </section>
+
+  <!-- HOTSPOTS + STATUS -->
+  <section>
+    <div class="section-label"><span class="num">02</span><h2>Geographic Hotspots &amp; Confirmation Status</h2><div class="rule"></div></div>
+    <div class="grid-2">
+      <div class="panel">
+        <h3>Top 10 states by incident count</h3>
+        <p class="sub">Ranks states with the highest number of logged paper-leak incidents.</p>
+        <canvas id="stateChart" height="230"></canvas>
+      </div>
+      <div class="panel">
+        <h3>Confirmed vs. alleged</h3>
+        <p class="sub">Share of incidents officially confirmed vs. reported but unproven.</p>
+        <canvas id="statusChart" height="230"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACCOUNTABILITY -->
+  <section>
+    <div class="section-label"><span class="num">03</span><h2>Accountability: Response vs. Confirmation</h2><div class="rule"></div></div>
+    <div class="grid-2">
+      <div class="panel">
+        <h3>Response severity, confirmed leaks only</h3>
+        <p class="sub">Of the 48 confirmed leaks, how severe was the institutional response?</p>
+        <canvas id="severityChart" height="230"></canvas>
+      </div>
+      <div class="panel">
+        <h3>Repeat-offender conducting bodies</h3>
+        <p class="sub">Bodies with more than one logged incident in the dataset.</p>
+        <ul class="leaderboard" id="leaderboard"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONDUCTING BODY TYPE -->
+  <section>
+    <div class="section-label"><span class="num">04</span><h2>Where Exposure Concentrates</h2><div class="rule"></div></div>
+    <div class="grid-3">
+      <div class="panel">
+        <h3>By conducting-body type</h3>
+        <p class="sub">State bodies account for the majority of incidents.</p>
+        <canvas id="bodyTypeChart" height="200"></canvas>
+      </div>
+      <div class="panel">
+        <h3>Action taken, all incidents</h3>
+        <p class="sub">Most common institutional response category.</p>
+        <canvas id="actionChart" height="200"></canvas>
+      </div>
+      <div class="panel">
+        <h3>Reading this dashboard</h3>
+        <p class="sub" style="margin-bottom:10px;">Suggested use for a ministry analyst:</p>
+        <p style="font-size:12.5px;line-height:1.7;color:var(--ink-soft);">
+          Cross-reference the repeat-offender list against the state hotspot ranking. Bodies appearing in <b style="color:var(--ink);">both</b> lists are the highest-priority candidates for a proctoring or logistics audit, since they show recurrence rather than a one-off failure.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASE LOG -->
+  <section>
+    <div class="section-label"><span class="num">05</span><h2>Incident Case Log</h2><div class="rule"></div></div>
+    <div class="filters">
+      <div class="filter-group">
+        <label>Year</label>
+        <select id="f-year"><option value="">All years</option></select>
+      </div>
+      <div class="filter-group">
+        <label>State / UT</label>
+        <select id="f-state"><option value="">All states</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Body Type</label>
+        <select id="f-bodytype"><option value="">All types</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Status</label>
+        <select id="f-status">
+          <option value="">All statuses</option>
+          <option value="Confirmed">Confirmed</option>
+          <option value="Alleged">Alleged</option>
+        </select>
+      </div>
+      <button class="filter-reset" id="f-reset">Reset filters</button>
+      <div class="filter-count"><b id="f-count">66</b> of 66 incidents shown</div>
+    </div>
+    <div class="table-panel">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Exam</th><th>Conducting Body</th><th>State</th>
+              <th>Status</th><th>Action</th><th>Response</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="case-log-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <b>ExamGuard India</b> &mdash; National Examination Integrity Dashboard<br>
+      Source data: "India &ndash; Exam Paper Leak Cases and Incidents" (Kaggle) &middot; Cleaned &amp; enriched via <span class="mono">scripts/clean_data.py</span><br>
+      Built as an independent portfolio project. Not affiliated with or endorsed by the Ministry of Education, Government of India.
+    </div>
+    <div style="text-align:right;">
+      Full pipeline &amp; source on <a href="#">GitHub</a><br>
+      Generated: <span id="gen-date"></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+const DATA = {"summary": {"totalIncidents": 66, "yearMin": 2014, "yearMax": 2024, "confirmedCount": 48, "allegedCount": 18, "statesAffected": 23, "last3YearsCount": 39, "byYear": {"2014": 1, "2015": 3, "2016": 2, "2017": 3, "2018": 5, "2019": 3, "2020": 2, "2021": 8, "2022": 11, "2023": 15, "2024": 13}, "byState": {"Uttar Pradesh": 11, "All India": 7, "Maharashtra": 6, "Bihar": 5, "Kerala": 3, "Madhya Pradesh": 3, "Gujarat": 3, "Telangana": 3, "Rajasthan": 3, "Punjab": 2, "Tripura": 2, "Assam": 2, "West Bengal": 2, "Odisha": 2, "Himachal Pradesh": 2, "Delhi": 2, "Tamil Nadu": 1, "Pondicherry": 1, "Jharkhand": 1, "Arunachal Pradesh": 1, "Jammu": 1, "Uttarakhand": 1, "Karnataka": 1, "Haryana": 1}, "byStatus": {"Confirmed": 48, "Alleged": 18}, "byBodyType": {"State": 50, "Central": 13, "Private": 3}, "byAction": {"Exam Cancelled": 31, "Legal Action Taken": 21, "No Corrective Action": 3, "Chargesheet Filed": 3, "Claim Dismissed": 3, "Not Reported": 2, "Alternative Paper Used": 1, "Reports Denied": 1, "Suspension Issued": 1}, "bySeverity": {"Moderate Response": 53, "No Consequence": 7, "Strong Response": 4, "Unknown": 2}, "repeatOffenders": {"Uttar Pradesh Public Service Commission": 3, "Maharashtra State Board of Secondary and Higher Secondary Education": 3, "CBSE": 3, "National Testing Agency": 2, "Bihar Public Service Commission": 2, "Assam Board of Secondary Education": 2, "West Bengal Board of Primary Education": 2, "Telangana State Public Service Commission": 2, "Bihar School Examination Board": 2, "Railway Recruitment Board": 2}, "confirmedSeverity": {"Moderate Response": 42, "Strong Response": 4, "No Consequence": 2}, "strongResponseRate": 8.3}, "records": [{"date": "2024-08-26", "year": 2024, "exam": "B.Ed. 4th Sem Exam : Creating an Inclusive School", "body": "Tamil Nadu Teachers Education University", "bodyType": "State", "state": "Tamil Nadu", "status": "Alleged", "actionCategory": "Alternative Paper Used", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2024-08-04", "year": 2024, "exam": "MBA 1st year Exam", "body": "Pondicherry University", "bodyType": "Central", "state": "Pondicherry", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2024-07-06", "year": 2024, "exam": "Foreign Medical Graduate Examination", "body": "National Board of Examinations in Medical Sciences (NBEMS)", "bodyType": "Central", "state": "Kerala", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2024-06-30", "year": 2024, "exam": "Agriculture Development Officers\u00a0", "body": "Punjab Public Service Commission", "bodyType": "State", "state": "Punjab", "status": "Alleged", "actionCategory": "Not Reported", "severity": "Unknown", "repeat": false, "priorIncidents": 0, "note": "Claim: Offical demanded bribe for leaking paper"}, {"date": "2024-06-18", "year": 2024, "exam": "UGC NET 2024", "body": "National Testing Agency", "bodyType": "Central", "state": "All India", "status": "Alleged", "actionCategory": "No Corrective Action", "severity": "No Consequence", "repeat": true, "priorIncidents": 1, "note": "accusation of paper leak"}, {"date": "2024-06-09", "year": 2024, "exam": "ADC Recruitment Exam", "body": "Tripura Tribal Areas Autonomous District Council", "bodyType": "State", "state": "Tripura", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Answer Key leaked before exam"}, {"date": "2024-05-28", "year": 2024, "exam": "MBA Semster Exam", "body": "Devi Ahilya Vishwavidyalaya's (DAVV)", "bodyType": "State", "state": "Madhya Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2024-04-28", "year": 2024, "exam": "VIT Engineering Exam", "body": "VIT", "bodyType": "Private", "state": "All India", "status": "Confirmed", "actionCategory": "Chargesheet Filed", "severity": "Strong Response", "repeat": false, "priorIncidents": 0, "note": "Leaking of question paper via remote access at a exam center"}, {"date": "2024-04-16", "year": 2024, "exam": "Teacher Recruitment Exam", "body": "Bihar Public Service Commission", "bodyType": "State", "state": "Bihar", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 1, "note": "Paper leaked on social media"}, {"date": "2024-03-17", "year": 2024, "exam": "Civil Services Prelims", "body": "Jharkhand Public Service Commission", "bodyType": "State", "state": "Jharkhand", "status": "Alleged", "actionCategory": "Reports Denied", "severity": "No Consequence", "repeat": false, "priorIncidents": 0, "note": "Video calimed that seal of question papers found broken"}, {"date": "2024-02-17", "year": 2024, "exam": "Constable Exam", "body": "Uttar Pradesh Police Recruitment and Promotion Board", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2024-02-16", "year": 2024, "exam": "High School English Exam", "body": "Assam Board of Secondary Education", "bodyType": "State", "state": "Assam", "status": "Alleged", "actionCategory": "Claim Dismissed", "severity": "No Consequence", "repeat": true, "priorIncidents": 1, "note": "claim : question paper leaked from one center"}, {"date": "2024-02-11", "year": 2024, "exam": "Review Officer/Assistant Review Officer ", "body": "Uttar Pradesh Public Service Commission", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 2, "note": "Paper leaked on social media"}, {"date": "2023-12-26", "year": 2023, "exam": "B.Tech CS Question Paper 5th Sem", "body": "Parul University", "bodyType": "Private", "state": "Gujarat", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Selling of question papers"}, {"date": "2023-12-25", "year": 2023, "exam": "Teacher Eligibility Test", "body": "West Bengal Board of Primary Education", "bodyType": "State", "state": "West Bengal", "status": "Alleged", "actionCategory": "Claim Dismissed", "severity": "No Consequence", "repeat": true, "priorIncidents": 1, "note": "Claim : paper leak"}, {"date": "2023-12-24", "year": 2023, "exam": "Class 10 Bengali pre-board examination", "body": "Tripura Board of Secondary Education (TBSE)", "bodyType": "State", "state": "Tripura", "status": "Confirmed", "actionCategory": "No Corrective Action", "severity": "No Consequence", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2023-12-22", "year": 2023, "exam": "MBA first term exam", "body": "Savitribai Phule\u00a0Pune\u00a0University", "bodyType": "State", "state": "Maharashtra", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2023-10-01", "year": 2023, "exam": "Constable Exam", "body": "Central Selection Board of Constables, Bihar", "bodyType": "State", "state": "Bihar", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2023-09-19", "year": 2023, "exam": "Occupational English Test", "body": "Private Center", "bodyType": "Private", "state": "Kerala", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Selling of question papers"}, {"date": "2023-07-20", "year": 2023, "exam": "BBA Exam", "body": "Barkatullah University", "bodyType": "State", "state": "Madhya Pradesh", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Question paper  found on the phones"}, {"date": "2023-07-16", "year": 2023, "exam": "Junior Engineer", "body": "Odisha Staff Selection Commission", "bodyType": "State", "state": "Odisha", "status": "Alleged", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2023-06-03", "year": 2023, "exam": "\u00a0Nursing Officer Recruitment Common Eligibility Test (NORCET-4)", "body": "AIIMS", "bodyType": "Central", "state": "All India", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Question paper  found on the phones"}, {"date": "2023-05-18", "year": 2023, "exam": "Class 12th English Exam", "body": "Punjab School Education Board", "bodyType": "State", "state": "Punjab", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2023-04-03", "year": 2023, "exam": "High School Hindi & Telgu ", "body": "Telangana Board of intermediate Education", "bodyType": "State", "state": "Telangana", "status": "Confirmed", "actionCategory": "Suspension Issued", "severity": "Strong Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on Whatsapp at a school"}, {"date": "2023-03-18", "year": 2023, "exam": "Class 12th Exam", "body": "Madhya Pradesh Board of Secondary Education", "bodyType": "State", "state": "Madhya Pradesh", "status": "Alleged", "actionCategory": "Claim Dismissed", "severity": "No Consequence", "repeat": false, "priorIncidents": 0, "note": "Claim : question paper leaked  on social media"}, {"date": "2023-03-06", "year": 2023, "exam": "High School Mathematics Exam", "body": "Assam Board of Secondary Education", "bodyType": "State", "state": "Assam", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": " irregularties reported at some exam centers"}, {"date": "2023-03-05", "year": 2023, "exam": " Assitant Civil Engineer", "body": "Telangana State Public Service Commission", "bodyType": "State", "state": "Telangana", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 1, "note": "Paper leaked on social media"}, {"date": "2023-03-03", "year": 2023, "exam": "Mathematics Exam", "body": "Maharashtra State Board of Secondary and Higher Secondary Education", "bodyType": "State", "state": "Maharashtra", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 2, "note": "Question paper viral on social media"}, {"date": "2022-12-21", "year": 2022, "exam": "Class 2nd Teacher Recruitment : GK Question Paper", "body": "Rajasthan Public Service Commission", "bodyType": "State", "state": "Rajasthan", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-10-16", "year": 2022, "exam": "Group 1 Prelims", "body": "Telangana State Public Service Commission", "bodyType": "State", "state": "Telangana", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-09-28", "year": 2022, "exam": "Diploma in Elementary Education", "body": "West Bengal Board of Primary Education", "bodyType": "State", "state": "West Bengal", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-09-12", "year": 2022, "exam": "Forest Guard Recruitment", "body": "Rajasthan Staff Selection Board", "bodyType": "State", "state": "Rajasthan", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Some candiates accessing paper before the exam"}, {"date": "2022-09-10", "year": 2022, "exam": "JE", "body": "Himachal Pradesh Staff Selection Commission", "bodyType": "State", "state": "Himachal Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-08-26", "year": 2022, "exam": "Assistant Civil Engineer", "body": "Arunachal Pradesh Public Service Commission", "bodyType": "State", "state": "Arunachal Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-07-31", "year": 2022, "exam": "Lekhpal Exam", "body": "The Uttar Pradesh Subordinate Services Selection Commission", "bodyType": "State", "state": "Uttar Pradesh", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Proxy candidates as solvers"}, {"date": "2022-05-08", "year": 2022, "exam": "BPSC 67th Exam", "body": "Bihar Public Service Commission", "bodyType": "State", "state": "Bihar", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-03-30", "year": 2022, "exam": "Class 12th English", "body": "Uttar Pradesh State Board of High School and Intermediate Education", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media 5 hours before the exam"}, {"date": "2022-03-27", "year": 2022, "exam": "sub-inspector recruitment examination", "body": "Jammu and Kashmir Services Selection Board", "bodyType": "State", "state": "Jammu", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-02-17", "year": 2022, "exam": "High School Mathematics Exam", "body": "Bihar School Examination Board", "bodyType": "State", "state": "Bihar", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 1, "note": "Paper leaked on social media"}, {"date": "2021-12-13", "year": 2021, "exam": "MHADA Exam", "body": "Maharashtra Housing and Area Development Authority", "bodyType": "State", "state": "Maharashtra", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "3 Persons trying to leak paper"}, {"date": "2021-12-12", "year": 2021, "exam": "Head Clerk", "body": "Gujarat Subordinate Service Selection Board", "bodyType": "State", "state": "Gujarat", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Selling of question papers"}, {"date": "2021-12-04", "year": 2021, "exam": "UKSSSC Exam", "body": "Uttarakhand Subordinate Staff Selection Commission", "bodyType": "State", "state": "Uttarakhand", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2021-09-28", "year": 2021, "exam": "Uttar Pradesh Teacher Eligbility Test", "body": "Department of Basic Education, Uttar Pradesh", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2021-09-26", "year": 2021, "exam": "Rajasthan Eligibility Examination for Teachers", "body": "BOARD OF SECONDARY EDUCATION, Rajasthan", "bodyType": "State", "state": "Rajasthan", "status": "Confirmed", "actionCategory": "Chargesheet Filed", "severity": "Strong Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked even after internet shutdown"}, {"date": "2021-09-14", "year": 2021, "exam": "National Law aptitude Test", "body": "National Law School of India University", "bodyType": "Central", "state": "All India", "status": "Alleged", "actionCategory": "Not Reported", "severity": "Unknown", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2021-09-02", "year": 2021, "exam": "JEE MAINS", "body": "National Testing Agency", "bodyType": "Central", "state": "All India", "status": "Confirmed", "actionCategory": "Chargesheet Filed", "severity": "Strong Response", "repeat": true, "priorIncidents": 0, "note": "Solving of question paper via remote access at a exam center"}, {"date": "2021-08-06", "year": 2021, "exam": "General Department Competitive Exam", "body": "Railway Recruitment Board", "bodyType": "Central", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "No Corrective Action", "severity": "No Consequence", "repeat": true, "priorIncidents": 1, "note": "Paper leaked on social media"}, {"date": "2020-09-04", "year": 2020, "exam": "2019 PSC Police Constable Exam", "body": "Kerala Public Service Commission", "bodyType": "State", "state": "Kerala", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Question paper leaked on social media"}, {"date": "2020-02-17", "year": 2020, "exam": "Mathematics Prepatory Exam", "body": "Karnataka School Examination and Assessment Board", "bodyType": "State", "state": "Karnataka", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2019-08-28", "year": 2019, "exam": "JE Exam", "body": "Railway Recruitment Board", "bodyType": "Central", "state": "Maharashtra", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Screenshots of questions on social media"}, {"date": "2019-02-25", "year": 2019, "exam": "High School Mathematics Exam", "body": "Bihar School Examination Board", "bodyType": "State", "state": "Bihar", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2019-02-24", "year": 2019, "exam": "Mother India Language Exam", "body": "Board of Secondary Education, Odisha", "bodyType": "State", "state": "Odisha", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2018-12-09", "year": 2018, "exam": "Gujarat Police Constable Recruitment", "body": "Gujarat Police Recruitment Board", "bodyType": "State", "state": "Gujarat", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2018-12-05", "year": 2018, "exam": " BCS-031", "body": "Indria Gandhi National Open University", "bodyType": "Central", "state": "Delhi", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media from a center"}, {"date": "2018-03-27", "year": 2018, "exam": "10th Math and 12th Economics", "body": "CBSE", "bodyType": "Central", "state": "Delhi", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 2, "note": "Students got handwritten question paper and many other irregularities reported"}, {"date": "2018-03-19", "year": 2018, "exam": "History and political science", "body": "Maharashtra State Board of Secondary and Higher Secondary Education", "bodyType": "State", "state": "Maharashtra", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 1, "note": "One coaching leaked question paper before exam on their whatsapp group"}, {"date": "2018-02-21", "year": 2018, "exam": "CGL 2nd Tier, 2017", "body": "Staff Selection Commission", "bodyType": "Central", "state": "All India", "status": "Alleged", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Answer Key leaked before exam"}, {"date": "2017-03-14", "year": 2017, "exam": "Class 12th CS and Physics", "body": "Himachal Pradesh Board of School Education", "bodyType": "State", "state": "Himachal Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper stolen"}, {"date": "2017-03-06", "year": 2017, "exam": "Class 12th Marathi", "body": "Maharashtra State Board of Secondary and Higher Secondary Education", "bodyType": "State", "state": "Maharashtra", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2017-02-10", "year": 2017, "exam": "HCS (Judicial) Paper -2017\u00a0", "body": "Haryana Public Service Commission", "bodyType": "State", "state": "Haryana", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper Leak"}, {"date": "2016-12-27", "year": 2016, "exam": "Review Officer/Assistant Review Officer - 2016", "body": "Uttar Pradesh Public Service Commission", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 1, "note": "Paper leaked on social media"}, {"date": "2016-05-01", "year": 2016, "exam": "NEET Phase 1 2016", "body": "CBSE", "bodyType": "Central", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 1, "note": "Cheating reported"}, {"date": "2015-05-25", "year": 2015, "exam": "UP CPMT 2015", "body": "King George's Medical University\u00a0, Lucknow", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2015-05-03", "year": 2015, "exam": "AIPMT 2015", "body": "CBSE", "bodyType": "Central", "state": "All India", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2015-03-30", "year": 2015, "exam": "Provincial civil services preliminary examination", "body": "Uttar Pradesh Public Service Commission", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2014-06-23", "year": 2014, "exam": "UP CPMT 2014", "body": "King George's Medical University\u00a0, Ghaziabadd", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}]};
+
+document.getElementById('gen-date').textContent = new Date().toISOString().slice(0,10);
+
+const NAVY = '#0B2340', AMBER = '#B5872A', BRICK = '#8C3327', GREEN='#3E6650',
+      SLATE = '#8891A0', PAPER2 = '#EFEBE1', AMBER2='#D9B65C';
+
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#5B6373';
+Chart.defaults.font.size = 12;
+
+/* ---------------- KPIs ---------------- */
+const s = DATA.summary;
+document.getElementById('ref-years').textContent = `${s.yearMin}\u2013${s.yearMax}`;
+document.getElementById('kpi-total').textContent = s.totalIncidents;
+document.getElementById('kpi-total-foot').textContent = `spanning ${s.yearMin}\u2013${s.yearMax}, ${Object.keys(s.byState).length} states/UTs`;
+document.getElementById('kpi-confirmed').textContent = Math.round(s.confirmedCount / s.totalIncidents * 100) + '%';
+document.getElementById('kpi-states').textContent = s.statesAffected;
+document.getElementById('kpi-recent').textContent = s.last3YearsCount;
+const priorShare = s.totalIncidents - s.last3YearsCount;
+const pct3yr = Math.round(s.last3YearsCount / s.totalIncidents * 100);
+document.getElementById('kpi-recent-foot').textContent = `${pct3yr}% of all incidents occurred in 2022\u201324 alone`;
+document.getElementById('kpi-strong').textContent = s.strongResponseRate + '%';
+
+/* ---------------- Trend chart ---------------- */
+const years = Object.keys(s.byYear);
+new Chart(document.getElementById('trendChart'), {
+  type: 'line',
+  data: {
+    labels: years,
+    datasets: [{
+      data: years.map(y => s.byYear[y]),
+      borderColor: NAVY,
+      backgroundColor: 'rgba(11,35,64,0.08)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 4,
+      pointBackgroundColor: AMBER,
+      pointBorderColor: NAVY,
+      borderWidth: 2.5,
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: c => `${c.parsed.y} incidents` } } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: '#E3DFD3' }, ticks: { stepSize: 3 } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+/* ---------------- State hotspot chart ---------------- */
+const stateEntries = Object.entries(s.byState).sort((a,b)=>b[1]-a[1]).slice(0,10);
+new Chart(document.getElementById('stateChart'), {
+  type: 'bar',
+  data: {
+    labels: stateEntries.map(e=>e[0]),
+    datasets: [{
+      data: stateEntries.map(e=>e[1]),
+      backgroundColor: stateEntries.map((e,i)=> i===0 ? BRICK : NAVY),
+      borderRadius: 1,
+      maxBarThickness: 22,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { display:false } },
+    scales: {
+      x: { beginAtZero:true, grid:{ color:'#E3DFD3' } },
+      y: { grid:{ display:false } }
+    }
+  }
+});
+
+/* ---------------- Status donut ---------------- */
+new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Confirmed','Alleged'],
+    datasets:[{ data:[s.confirmedCount, s.allegedCount], backgroundColor:[BRICK, SLATE], borderWidth:2, borderColor:'#fff' }]
+  },
+  options: {
+    cutout:'62%',
+    plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, padding:16 } } }
+  }
+});
+
+/* ---------------- Severity chart (confirmed only) ---------------- */
+const sevOrder = ['Strong Response','Moderate Response','No Consequence'];
+const sevColors = { 'Strong Response': GREEN, 'Moderate Response': AMBER, 'No Consequence': BRICK };
+const sevData = sevOrder.map(k => s.confirmedSeverity[k] || 0);
+new Chart(document.getElementById('severityChart'), {
+  type: 'bar',
+  data: {
+    labels: sevOrder,
+    datasets: [{ data: sevData, backgroundColor: sevOrder.map(k=>sevColors[k]), borderRadius: 2, maxBarThickness: 46 }]
+  },
+  options: {
+    plugins: { legend:{ display:false } },
+    scales: { y:{ beginAtZero:true, grid:{ color:'#E3DFD3' } }, x:{ grid:{ display:false } } }
+  }
+});
+
+/* ---------------- Repeat offender leaderboard ---------------- */
+const lb = document.getElementById('leaderboard');
+Object.entries(s.repeatOffenders).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([name,count])=>{
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="lb-name">${name}</span><span class="lb-count">\u00d7${count}</span>`;
+  lb.appendChild(li);
+});
+
+/* ---------------- Body type + action charts ---------------- */
+new Chart(document.getElementById('bodyTypeChart'), {
+  type: 'doughnut',
+  data: {
+    labels: Object.keys(s.byBodyType),
+    datasets: [{ data: Object.values(s.byBodyType), backgroundColor:[NAVY, AMBER, SLATE], borderWidth:2, borderColor:'#fff' }]
+  },
+  options: { cutout:'58%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:12, font:{size:11} } } } }
+});
+
+const actionSorted = Object.entries(s.byAction).sort((a,b)=>b[1]-a[1]).slice(0,6);
+new Chart(document.getElementById('actionChart'), {
+  type: 'bar',
+  data: {
+    labels: actionSorted.map(e=>e[0]),
+    datasets: [{ data: actionSorted.map(e=>e[1]), backgroundColor: NAVY, borderRadius:1, maxBarThickness:18 }]
+  },
+  options: {
+    indexAxis:'y',
+    plugins:{ legend:{ display:false } },
+    scales: { x:{ beginAtZero:true, grid:{ color:'#E3DFD3' } }, y:{ grid:{ display:false }, ticks:{ font:{ size:10.5 } } } }
+  }
+});
+
+/* ---------------- Filters + case log table ---------------- */
+const yearSel = document.getElementById('f-year');
+const stateSel = document.getElementById('f-state');
+const bodyTypeSel = document.getElementById('f-bodytype');
+const statusSel = document.getElementById('f-status');
+
+[...new Set(DATA.records.map(r=>r.year))].sort((a,b)=>b-a).forEach(y=>{
+  const o = document.createElement('option'); o.value=y; o.textContent=y; yearSel.appendChild(o);
+});
+[...new Set(DATA.records.map(r=>r.state))].sort().forEach(st=>{
+  const o = document.createElement('option'); o.value=st; o.textContent=st; stateSel.appendChild(o);
+});
+[...new Set(DATA.records.map(r=>r.bodyType))].sort().forEach(bt=>{
+  const o = document.createElement('option'); o.value=bt; o.textContent=bt; bodyTypeSel.appendChild(o);
+});
+
+function sevClass(sev){
+  if (sev === 'Strong Response') return 'sev-strong';
+  if (sev === 'Moderate Response') return 'sev-moderate';
+  if (sev === 'No Consequence') return 'sev-none';
+  return 'sev-unknown';
+}
+
+function renderTable(){
+  const yf = yearSel.value, sf = stateSel.value, bf = bodyTypeSel.value, stf = statusSel.value;
+  const rows = DATA.records.filter(r =>
+    (!yf || String(r.year) === yf) &&
+    (!sf || r.state === sf) &&
+    (!bf || r.bodyType === bf) &&
+    (!stf || r.status === stf)
+  );
+  document.getElementById('f-count').textContent = rows.length;
+  const tbody = document.getElementById('case-log-body');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td class="mono" style="white-space:nowrap;">${r.date || '\u2014'}</td>
+      <td class="exam-name">${r.exam}</td>
+      <td>${r.body}${r.repeat ? `<div class="repeat-flag">REPEAT &middot; ${r.priorIncidents + 1} incidents on file</div>` : ''}</td>
+      <td>${r.state}</td>
+      <td><span class="stamp-badge ${r.status === 'Confirmed' ? 'stamp-confirmed' : 'stamp-alleged'}">${r.status}</span></td>
+      <td style="font-size:12px;">${r.actionCategory}</td>
+      <td><span class="sev-badge ${sevClass(r.severity)}">${r.severity}</span></td>
+      <td class="note-text">${r.note || ''}</td>
+    </tr>
+  `).join('');
+}
+
+[yearSel, stateSel, bodyTypeSel, statusSel].forEach(el => el.addEventListener('change', renderTable));
+document.getElementById('f-reset').addEventListener('click', () => {
+  yearSel.value = ''; stateSel.value=''; bodyTypeSel.value=''; statusSel.value='';
+  renderTable();
+});
+
+renderTable();
+</script>
+
+</body>
+</html>
