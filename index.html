@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230B2340'/%3E%3Ctext x='50' y='68' font-size='54' font-family='Georgia,serif' font-weight='700' fill='%23D9B65C' text-anchor='middle'%3EEG%3C/text%3E%3C/svg%3E">
+<script src="dashboard/chart.umd.min.js"></script>
 <style>
   :root{
     --navy:#0B2340;
@@ -26,7 +27,6 @@
     --radius:2px;
   }
   *{box-sizing:border-box;}
-  html{scroll-behavior:smooth;}
   body{
     margin:0;
     background:var(--paper);
@@ -92,9 +92,8 @@
     background:var(--line);border:1px solid var(--line);
   }
   .kpi{
-    background:var(--card);padding:20px 18px;position:relative;transition:box-shadow .15s ease, transform .15s ease;
+    background:var(--card);padding:20px 18px;position:relative;
   }
-  .kpi:hover{box-shadow:0 6px 18px rgba(11,35,64,.08);transform:translateY(-1px);z-index:1;}
   .kpi .label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);font-weight:600;}
   .kpi .value{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;color:var(--navy);margin-top:8px;font-feature-settings:"tnum";font-variant-numeric:tabular-nums;}
   .kpi .foot{font-size:11.5px;color:var(--ink-soft);margin-top:6px;line-height:1.4;}
@@ -103,9 +102,8 @@
 
   /* ---------- Cards / panels ---------- */
   .panel{
-    background:var(--card);border:1px solid var(--line);padding:22px;transition:box-shadow .15s ease;
+    background:var(--card);border:1px solid var(--line);padding:22px;
   }
-  .panel:hover{box-shadow:0 6px 20px rgba(11,35,64,.06);}
   .panel h3{
     font-family:'Source Serif 4',serif;font-size:16px;margin:0 0 4px;color:var(--navy);font-weight:600;
   }
@@ -138,11 +136,16 @@
   .stamp-confirmed{color:var(--brick);}
   .stamp-alleged{color:var(--ink-soft);border-style:dashed;}
 
-  .sev-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px;}
+  /* severity badges: squared off to match the dossier's sharp-corner system
+     (--radius:2px everywhere else) instead of the rounded "SaaS pill" look */
+  .sev-badge{
+    display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;
+    letter-spacing:.03em;text-transform:uppercase;padding:3px 8px;border-radius:1px;border:1px solid currentColor;
+  }
   .sev-strong{background:var(--green-soft);color:var(--green);}
   .sev-moderate{background:#FBF3E1;color:var(--amber);}
   .sev-none{background:var(--brick-soft);color:var(--brick);}
-  .sev-unknown{background:#EAEAEA;color:#666;}
+  .sev-unknown{background:#EAEAEA;color:#666;border-style:dashed;}
 
   /* ---------- filters ---------- */
   .filters{
@@ -205,17 +208,6 @@
     outline:2px solid var(--amber);outline-offset:2px;
   }
 
-  @media (prefers-reduced-motion: no-preference){
-    section{opacity:0;transform:translateY(10px);animation:rise .5s ease forwards;}
-    section:nth-of-type(1){animation-delay:.02s;}
-    section:nth-of-type(2){animation-delay:.06s;}
-    section:nth-of-type(3){animation-delay:.1s;}
-    section:nth-of-type(4){animation-delay:.14s;}
-    section:nth-of-type(5){animation-delay:.18s;}
-    section:nth-of-type(6){animation-delay:.22s;}
-  }
-  @keyframes rise{ to{ opacity:1; transform:translateY(0); } }
-
   @media (max-width:920px){
     .kpi-grid{grid-template-columns:repeat(2,1fr);}
     .grid-2,.grid-3{grid-template-columns:1fr;}
@@ -243,8 +235,8 @@
       STATUS: <b style="color:#8FBF9F;">ACTIVE MONITORING</b>
     </div>
   </div>
-  <h1 class="masthead-title">Are examination paper leaks being deterred &mdash; or just cancelled and repeated?</h1>
-  <p class="masthead-desc">A briefing-style dashboard built to help policy teams identify recurring leak hotspots, track how enforcement severity compares to confirmed incidents, and flag conducting bodies with repeat exposure. Prepared as an independent portfolio analysis, not an official government publication.</p>
+  <h1 class="masthead-title">Are paper leaks being deterred &mdash; or just cancelled and repeated?</h1>
+  <p class="masthead-desc">A briefing-style read of 66 logged incidents, built to flag recurring hotspots and check whether enforcement actually escalates with severity. Independent portfolio analysis — not an official government publication.</p>
 </header>
 
 <div class="wrap">
@@ -284,7 +276,7 @@
   <section style="margin-bottom:36px;">
     <div class="callout">
       <div class="stamp">DATA&nbsp;NOTE</div>
-      <p><b>"Appeared Students" is reported for only 1 of 66 incidents (1.5%) in the source dataset</b> &mdash; so "students affected" is intentionally excluded as a headline metric here. Treating it as reliable without enrichment from official exam-body records would materially overstate confidence. State names, conducting-body names, and action-taken text were also standardized during cleaning (see <span class="mono">scripts/clean_data.py</span>) to correct spelling inconsistencies in the raw source.</p>
+      <p><b>"Appeared Students" is reported for only 1 of 66 incidents (1.5%) in the source dataset</b> &mdash; so "students affected" is deliberately left out as a headline metric here. Treating it as reliable without enrichment from official exam-body records would overstate confidence the data doesn't support. State names, conducting-body names, and action-taken text were standardized during cleaning (see <span class="mono">scripts/clean_data.py</span>) to fix spelling inconsistencies in the raw source.</p>
     </div>
   </section>
 
@@ -348,9 +340,9 @@
       </div>
       <div class="panel">
         <h3>Reading this dashboard</h3>
-        <p class="sub" style="margin-bottom:10px;">Suggested use for a ministry analyst:</p>
+        <p class="sub" style="margin-bottom:10px;">A practical way to use it:</p>
         <p style="font-size:12.5px;line-height:1.7;color:var(--ink-soft);">
-          Cross-reference the repeat-offender list against the state hotspot ranking. Bodies appearing in <b style="color:var(--ink);">both</b> lists are the highest-priority candidates for a proctoring or logistics audit, since they show recurrence rather than a one-off failure.
+          Cross-check the repeat-offender list against the state hotspot ranking. A body on <b style="color:var(--ink);">both</b> lists is a higher-priority audit candidate — it's recurrence, not a one-off failure.
         </p>
       </div>
     </div>
@@ -413,19 +405,18 @@
     </div>
   </div>
 </footer>
-
 <script>
 const DATA = {"summary": {"totalIncidents": 66, "yearMin": 2014, "yearMax": 2024, "confirmedCount": 48, "allegedCount": 18, "statesAffected": 23, "last3YearsCount": 39, "byYear": {"2014": 1, "2015": 3, "2016": 2, "2017": 3, "2018": 5, "2019": 3, "2020": 2, "2021": 8, "2022": 11, "2023": 15, "2024": 13}, "byState": {"Uttar Pradesh": 11, "All India": 7, "Maharashtra": 6, "Bihar": 5, "Kerala": 3, "Madhya Pradesh": 3, "Gujarat": 3, "Telangana": 3, "Rajasthan": 3, "Punjab": 2, "Tripura": 2, "Assam": 2, "West Bengal": 2, "Odisha": 2, "Himachal Pradesh": 2, "Delhi": 2, "Tamil Nadu": 1, "Pondicherry": 1, "Jharkhand": 1, "Arunachal Pradesh": 1, "Jammu": 1, "Uttarakhand": 1, "Karnataka": 1, "Haryana": 1}, "byStatus": {"Confirmed": 48, "Alleged": 18}, "byBodyType": {"State": 50, "Central": 13, "Private": 3}, "byAction": {"Exam Cancelled": 31, "Legal Action Taken": 21, "No Corrective Action": 3, "Chargesheet Filed": 3, "Claim Dismissed": 3, "Not Reported": 2, "Alternative Paper Used": 1, "Reports Denied": 1, "Suspension Issued": 1}, "bySeverity": {"Moderate Response": 53, "No Consequence": 7, "Strong Response": 4, "Unknown": 2}, "repeatOffenders": {"Uttar Pradesh Public Service Commission": 3, "Maharashtra State Board of Secondary and Higher Secondary Education": 3, "CBSE": 3, "National Testing Agency": 2, "Bihar Public Service Commission": 2, "Assam Board of Secondary Education": 2, "West Bengal Board of Primary Education": 2, "Telangana State Public Service Commission": 2, "Bihar School Examination Board": 2, "Railway Recruitment Board": 2}, "confirmedSeverity": {"Moderate Response": 42, "Strong Response": 4, "No Consequence": 2}, "strongResponseRate": 8.3}, "records": [{"date": "2024-08-26", "year": 2024, "exam": "B.Ed. 4th Sem Exam : Creating an Inclusive School", "body": "Tamil Nadu Teachers Education University", "bodyType": "State", "state": "Tamil Nadu", "status": "Alleged", "actionCategory": "Alternative Paper Used", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2024-08-04", "year": 2024, "exam": "MBA 1st year Exam", "body": "Pondicherry University", "bodyType": "Central", "state": "Pondicherry", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2024-07-06", "year": 2024, "exam": "Foreign Medical Graduate Examination", "body": "National Board of Examinations in Medical Sciences (NBEMS)", "bodyType": "Central", "state": "Kerala", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2024-06-30", "year": 2024, "exam": "Agriculture Development Officers\u00a0", "body": "Punjab Public Service Commission", "bodyType": "State", "state": "Punjab", "status": "Alleged", "actionCategory": "Not Reported", "severity": "Unknown", "repeat": false, "priorIncidents": 0, "note": "Claim: Offical demanded bribe for leaking paper"}, {"date": "2024-06-18", "year": 2024, "exam": "UGC NET 2024", "body": "National Testing Agency", "bodyType": "Central", "state": "All India", "status": "Alleged", "actionCategory": "No Corrective Action", "severity": "No Consequence", "repeat": true, "priorIncidents": 1, "note": "accusation of paper leak"}, {"date": "2024-06-09", "year": 2024, "exam": "ADC Recruitment Exam", "body": "Tripura Tribal Areas Autonomous District Council", "bodyType": "State", "state": "Tripura", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Answer Key leaked before exam"}, {"date": "2024-05-28", "year": 2024, "exam": "MBA Semster Exam", "body": "Devi Ahilya Vishwavidyalaya's (DAVV)", "bodyType": "State", "state": "Madhya Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2024-04-28", "year": 2024, "exam": "VIT Engineering Exam", "body": "VIT", "bodyType": "Private", "state": "All India", "status": "Confirmed", "actionCategory": "Chargesheet Filed", "severity": "Strong Response", "repeat": false, "priorIncidents": 0, "note": "Leaking of question paper via remote access at a exam center"}, {"date": "2024-04-16", "year": 2024, "exam": "Teacher Recruitment Exam", "body": "Bihar Public Service Commission", "bodyType": "State", "state": "Bihar", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 1, "note": "Paper leaked on social media"}, {"date": "2024-03-17", "year": 2024, "exam": "Civil Services Prelims", "body": "Jharkhand Public Service Commission", "bodyType": "State", "state": "Jharkhand", "status": "Alleged", "actionCategory": "Reports Denied", "severity": "No Consequence", "repeat": false, "priorIncidents": 0, "note": "Video calimed that seal of question papers found broken"}, {"date": "2024-02-17", "year": 2024, "exam": "Constable Exam", "body": "Uttar Pradesh Police Recruitment and Promotion Board", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2024-02-16", "year": 2024, "exam": "High School English Exam", "body": "Assam Board of Secondary Education", "bodyType": "State", "state": "Assam", "status": "Alleged", "actionCategory": "Claim Dismissed", "severity": "No Consequence", "repeat": true, "priorIncidents": 1, "note": "claim : question paper leaked from one center"}, {"date": "2024-02-11", "year": 2024, "exam": "Review Officer/Assistant Review Officer ", "body": "Uttar Pradesh Public Service Commission", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 2, "note": "Paper leaked on social media"}, {"date": "2023-12-26", "year": 2023, "exam": "B.Tech CS Question Paper 5th Sem", "body": "Parul University", "bodyType": "Private", "state": "Gujarat", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Selling of question papers"}, {"date": "2023-12-25", "year": 2023, "exam": "Teacher Eligibility Test", "body": "West Bengal Board of Primary Education", "bodyType": "State", "state": "West Bengal", "status": "Alleged", "actionCategory": "Claim Dismissed", "severity": "No Consequence", "repeat": true, "priorIncidents": 1, "note": "Claim : paper leak"}, {"date": "2023-12-24", "year": 2023, "exam": "Class 10 Bengali pre-board examination", "body": "Tripura Board of Secondary Education (TBSE)", "bodyType": "State", "state": "Tripura", "status": "Confirmed", "actionCategory": "No Corrective Action", "severity": "No Consequence", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2023-12-22", "year": 2023, "exam": "MBA first term exam", "body": "Savitribai Phule\u00a0Pune\u00a0University", "bodyType": "State", "state": "Maharashtra", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2023-10-01", "year": 2023, "exam": "Constable Exam", "body": "Central Selection Board of Constables, Bihar", "bodyType": "State", "state": "Bihar", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2023-09-19", "year": 2023, "exam": "Occupational English Test", "body": "Private Center", "bodyType": "Private", "state": "Kerala", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Selling of question papers"}, {"date": "2023-07-20", "year": 2023, "exam": "BBA Exam", "body": "Barkatullah University", "bodyType": "State", "state": "Madhya Pradesh", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Question paper  found on the phones"}, {"date": "2023-07-16", "year": 2023, "exam": "Junior Engineer", "body": "Odisha Staff Selection Commission", "bodyType": "State", "state": "Odisha", "status": "Alleged", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2023-06-03", "year": 2023, "exam": "\u00a0Nursing Officer Recruitment Common Eligibility Test (NORCET-4)", "body": "AIIMS", "bodyType": "Central", "state": "All India", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Question paper  found on the phones"}, {"date": "2023-05-18", "year": 2023, "exam": "Class 12th English Exam", "body": "Punjab School Education Board", "bodyType": "State", "state": "Punjab", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2023-04-03", "year": 2023, "exam": "High School Hindi & Telgu ", "body": "Telangana Board of intermediate Education", "bodyType": "State", "state": "Telangana", "status": "Confirmed", "actionCategory": "Suspension Issued", "severity": "Strong Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on Whatsapp at a school"}, {"date": "2023-03-18", "year": 2023, "exam": "Class 12th Exam", "body": "Madhya Pradesh Board of Secondary Education", "bodyType": "State", "state": "Madhya Pradesh", "status": "Alleged", "actionCategory": "Claim Dismissed", "severity": "No Consequence", "repeat": false, "priorIncidents": 0, "note": "Claim : question paper leaked  on social media"}, {"date": "2023-03-06", "year": 2023, "exam": "High School Mathematics Exam", "body": "Assam Board of Secondary Education", "bodyType": "State", "state": "Assam", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": " irregularties reported at some exam centers"}, {"date": "2023-03-05", "year": 2023, "exam": " Assitant Civil Engineer", "body": "Telangana State Public Service Commission", "bodyType": "State", "state": "Telangana", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 1, "note": "Paper leaked on social media"}, {"date": "2023-03-03", "year": 2023, "exam": "Mathematics Exam", "body": "Maharashtra State Board of Secondary and Higher Secondary Education", "bodyType": "State", "state": "Maharashtra", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 2, "note": "Question paper viral on social media"}, {"date": "2022-12-21", "year": 2022, "exam": "Class 2nd Teacher Recruitment : GK Question Paper", "body": "Rajasthan Public Service Commission", "bodyType": "State", "state": "Rajasthan", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-10-16", "year": 2022, "exam": "Group 1 Prelims", "body": "Telangana State Public Service Commission", "bodyType": "State", "state": "Telangana", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-09-28", "year": 2022, "exam": "Diploma in Elementary Education", "body": "West Bengal Board of Primary Education", "bodyType": "State", "state": "West Bengal", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-09-12", "year": 2022, "exam": "Forest Guard Recruitment", "body": "Rajasthan Staff Selection Board", "bodyType": "State", "state": "Rajasthan", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Some candiates accessing paper before the exam"}, {"date": "2022-09-10", "year": 2022, "exam": "JE", "body": "Himachal Pradesh Staff Selection Commission", "bodyType": "State", "state": "Himachal Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-08-26", "year": 2022, "exam": "Assistant Civil Engineer", "body": "Arunachal Pradesh Public Service Commission", "bodyType": "State", "state": "Arunachal Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-07-31", "year": 2022, "exam": "Lekhpal Exam", "body": "The Uttar Pradesh Subordinate Services Selection Commission", "bodyType": "State", "state": "Uttar Pradesh", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Proxy candidates as solvers"}, {"date": "2022-05-08", "year": 2022, "exam": "BPSC 67th Exam", "body": "Bihar Public Service Commission", "bodyType": "State", "state": "Bihar", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-03-30", "year": 2022, "exam": "Class 12th English", "body": "Uttar Pradesh State Board of High School and Intermediate Education", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media 5 hours before the exam"}, {"date": "2022-03-27", "year": 2022, "exam": "sub-inspector recruitment examination", "body": "Jammu and Kashmir Services Selection Board", "bodyType": "State", "state": "Jammu", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2022-02-17", "year": 2022, "exam": "High School Mathematics Exam", "body": "Bihar School Examination Board", "bodyType": "State", "state": "Bihar", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 1, "note": "Paper leaked on social media"}, {"date": "2021-12-13", "year": 2021, "exam": "MHADA Exam", "body": "Maharashtra Housing and Area Development Authority", "bodyType": "State", "state": "Maharashtra", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "3 Persons trying to leak paper"}, {"date": "2021-12-12", "year": 2021, "exam": "Head Clerk", "body": "Gujarat Subordinate Service Selection Board", "bodyType": "State", "state": "Gujarat", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Selling of question papers"}, {"date": "2021-12-04", "year": 2021, "exam": "UKSSSC Exam", "body": "Uttarakhand Subordinate Staff Selection Commission", "bodyType": "State", "state": "Uttarakhand", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2021-09-28", "year": 2021, "exam": "Uttar Pradesh Teacher Eligbility Test", "body": "Department of Basic Education, Uttar Pradesh", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2021-09-26", "year": 2021, "exam": "Rajasthan Eligibility Examination for Teachers", "body": "BOARD OF SECONDARY EDUCATION, Rajasthan", "bodyType": "State", "state": "Rajasthan", "status": "Confirmed", "actionCategory": "Chargesheet Filed", "severity": "Strong Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked even after internet shutdown"}, {"date": "2021-09-14", "year": 2021, "exam": "National Law aptitude Test", "body": "National Law School of India University", "bodyType": "Central", "state": "All India", "status": "Alleged", "actionCategory": "Not Reported", "severity": "Unknown", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2021-09-02", "year": 2021, "exam": "JEE MAINS", "body": "National Testing Agency", "bodyType": "Central", "state": "All India", "status": "Confirmed", "actionCategory": "Chargesheet Filed", "severity": "Strong Response", "repeat": true, "priorIncidents": 0, "note": "Solving of question paper via remote access at a exam center"}, {"date": "2021-08-06", "year": 2021, "exam": "General Department Competitive Exam", "body": "Railway Recruitment Board", "bodyType": "Central", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "No Corrective Action", "severity": "No Consequence", "repeat": true, "priorIncidents": 1, "note": "Paper leaked on social media"}, {"date": "2020-09-04", "year": 2020, "exam": "2019 PSC Police Constable Exam", "body": "Kerala Public Service Commission", "bodyType": "State", "state": "Kerala", "status": "Alleged", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Question paper leaked on social media"}, {"date": "2020-02-17", "year": 2020, "exam": "Mathematics Prepatory Exam", "body": "Karnataka School Examination and Assessment Board", "bodyType": "State", "state": "Karnataka", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2019-08-28", "year": 2019, "exam": "JE Exam", "body": "Railway Recruitment Board", "bodyType": "Central", "state": "Maharashtra", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Screenshots of questions on social media"}, {"date": "2019-02-25", "year": 2019, "exam": "High School Mathematics Exam", "body": "Bihar School Examination Board", "bodyType": "State", "state": "Bihar", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2019-02-24", "year": 2019, "exam": "Mother India Language Exam", "body": "Board of Secondary Education, Odisha", "bodyType": "State", "state": "Odisha", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2018-12-09", "year": 2018, "exam": "Gujarat Police Constable Recruitment", "body": "Gujarat Police Recruitment Board", "bodyType": "State", "state": "Gujarat", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2018-12-05", "year": 2018, "exam": " BCS-031", "body": "Indria Gandhi National Open University", "bodyType": "Central", "state": "Delhi", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media from a center"}, {"date": "2018-03-27", "year": 2018, "exam": "10th Math and 12th Economics", "body": "CBSE", "bodyType": "Central", "state": "Delhi", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 2, "note": "Students got handwritten question paper and many other irregularities reported"}, {"date": "2018-03-19", "year": 2018, "exam": "History and political science", "body": "Maharashtra State Board of Secondary and Higher Secondary Education", "bodyType": "State", "state": "Maharashtra", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 1, "note": "One coaching leaked question paper before exam on their whatsapp group"}, {"date": "2018-02-21", "year": 2018, "exam": "CGL 2nd Tier, 2017", "body": "Staff Selection Commission", "bodyType": "Central", "state": "All India", "status": "Alleged", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Answer Key leaked before exam"}, {"date": "2017-03-14", "year": 2017, "exam": "Class 12th CS and Physics", "body": "Himachal Pradesh Board of School Education", "bodyType": "State", "state": "Himachal Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper stolen"}, {"date": "2017-03-06", "year": 2017, "exam": "Class 12th Marathi", "body": "Maharashtra State Board of Secondary and Higher Secondary Education", "bodyType": "State", "state": "Maharashtra", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2017-02-10", "year": 2017, "exam": "HCS (Judicial) Paper -2017\u00a0", "body": "Haryana Public Service Commission", "bodyType": "State", "state": "Haryana", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper Leak"}, {"date": "2016-12-27", "year": 2016, "exam": "Review Officer/Assistant Review Officer - 2016", "body": "Uttar Pradesh Public Service Commission", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 1, "note": "Paper leaked on social media"}, {"date": "2016-05-01", "year": 2016, "exam": "NEET Phase 1 2016", "body": "CBSE", "bodyType": "Central", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": true, "priorIncidents": 1, "note": "Cheating reported"}, {"date": "2015-05-25", "year": 2015, "exam": "UP CPMT 2015", "body": "King George's Medical University\u00a0, Lucknow", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Legal Action Taken", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2015-05-03", "year": 2015, "exam": "AIPMT 2015", "body": "CBSE", "bodyType": "Central", "state": "All India", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media"}, {"date": "2015-03-30", "year": 2015, "exam": "Provincial civil services preliminary examination", "body": "Uttar Pradesh Public Service Commission", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": true, "priorIncidents": 0, "note": "Paper leaked on social media before exam"}, {"date": "2014-06-23", "year": 2014, "exam": "UP CPMT 2014", "body": "King George's Medical University\u00a0, Ghaziabadd", "bodyType": "State", "state": "Uttar Pradesh", "status": "Confirmed", "actionCategory": "Exam Cancelled", "severity": "Moderate Response", "repeat": false, "priorIncidents": 0, "note": "Paper leaked on social media"}]};
 
 document.getElementById('gen-date').textContent = new Date().toISOString().slice(0,10);
 
 const NAVY = '#0B2340', AMBER = '#B5872A', BRICK = '#8C3327', GREEN='#3E6650',
-      SLATE = '#8891A0', PAPER2 = '#EFEBE1', AMBER2='#D9B65C';
+      SLATE = '#8891A0', AMBER2='#D9B65C';
 
 /* =========================================================================
    PART 1 — Text content: KPIs, leaderboard, filters, case log table.
-   Deliberately has ZERO dependency on Chart.js so the dashboard's data
-   is always visible even if the charting library fails to load.
+   Has zero dependency on Chart.js so the data is always visible even if
+   the charting library fails to load.
    ========================================================================= */
 const s = DATA.summary;
 document.getElementById('ref-years').textContent = `${s.yearMin}\u2013${s.yearMax}`;
@@ -504,35 +495,12 @@ document.getElementById('f-reset').addEventListener('click', () => {
 renderTable();
 
 /* =========================================================================
-   PART 2 — Charts. Chart.js is loaded dynamically with a multi-CDN fallback
-   chain (cdnjs -> jsDelivr -> unpkg). If every source fails (offline,
-   firewall, ad-blocker), each chart panel shows a plain-text fallback
-   instead of a blank canvas or a page-breaking error.
+   PART 2 — Charts. Chart.js is vendored locally (dashboard/chart.umd.min.js)
+   and loaded synchronously via a plain <script> tag in <head> — no runtime
+   CDN dependency, no fallback chain. If it fails to load for any reason,
+   each chart panel falls back to a plain-text note instead of a blank
+   canvas or a page-breaking error.
    ========================================================================= */
-function loadScript(src){
-  return new Promise((resolve, reject) => {
-    const el = document.createElement('script');
-    el.src = src;
-    el.onload = () => resolve(true);
-    el.onerror = () => reject(new Error('failed: ' + src));
-    document.head.appendChild(el);
-  });
-}
-
-const CHART_CDNS = [
-  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js',
-  'https://unpkg.com/chart.js@4.4.4/dist/chart.umd.min.js'
-];
-
-async function loadChartJs(){
-  for (const url of CHART_CDNS){
-    try { await loadScript(url); if (typeof Chart !== 'undefined') return true; }
-    catch(e) { /* try next CDN */ }
-  }
-  return false;
-}
-
 function chartFallback(canvasId, message){
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -617,13 +585,12 @@ function renderCharts(){
   });
 }
 
-loadChartJs().then(ok => {
-  if (ok) { renderCharts(); }
-  else {
-    ['trendChart','stateChart','statusChart','severityChart','bodyTypeChart','actionChart']
-      .forEach(id => chartFallback(id, 'Chart library unavailable offline \u2014 see the KPI cards and case log table for the same figures.'));
-  }
-});
+if (typeof Chart === 'undefined') {
+  ['trendChart','stateChart','statusChart','severityChart','bodyTypeChart','actionChart']
+    .forEach(id => chartFallback(id, 'Chart.js failed to load from dashboard/chart.umd.min.js \u2014 see the KPI cards and case log table for the same figures.'));
+} else {
+  renderCharts();
+}
 </script>
 
 </body>
